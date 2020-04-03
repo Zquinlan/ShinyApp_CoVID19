@@ -1,0 +1,10 @@
+name: covid
+title:
+username:
+account: zquinlan
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2053217
+bundleId: 2966377
+url: https://zquinlan.shinyapps.io/covid/
+when: 1585950694.86672
