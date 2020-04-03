@@ -25,7 +25,7 @@ ui <- fluidPage(
                         choices = str_sort(c("United States of America", "China", "United Kingdom", "Sweden", "Germany",
                                     "Italy", "France", "Spain", "South Korea", "Switzerland", "New Zealand", "Israel",
                                     "Thailand", "Vietnam", "Singapore", "Netherlands", "Mexico", "Japan", "Australia",
-                                    "Palestine", "Curacao")),
+                                    "Palestine", "Curacao", "South Africa")),
                         selected = c("United States of America", "China", "Germany", "Italy"),
                         multiple = TRUE)
         ),
