@@ -8,7 +8,7 @@ library(scales)
 
 ui <- fluidPage(
     #title
-    titlePanel("CoVID cases by Country and State"),
+    titlePanel("CoVID cases by country and state"),
     
     ## Countries
     sidebarLayout(
@@ -131,7 +131,7 @@ server <- function(input, output) {
             ylab("New Cases") +
             scale_y_log10() + 
             # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
-            ggtitle(paste("New daily CoVID-19 cases by State \n (data downloaded from github.com/nytimes/covid-19-data on", Sys.Date(), ")")) +
+            ggtitle(paste("New daily CoVID-19 cases by state \n (data downloaded from github.com/nytimes/covid-19-data on", Sys.Date(), ")")) +
             theme(
                 axis.text.x = element_text(angle = 60, size = 10, hjust = 1),
                 panel.background = element_rect(fill = "transparent"), 
