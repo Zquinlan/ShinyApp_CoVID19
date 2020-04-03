@@ -130,9 +130,6 @@ server <- function(input, output) {
             xlab(paste("Date (past", input$previous_days, "days)")) +
             ylab("New Cases") +
             scale_y_log10() + 
-            # scale_y_continuous(minor_breaks = seq(0, max(states_filtered$new_cases + 300), 250),
-            #                    breaks = seq(0, max(states_filtered$new_cases + 300), 500),
-            #                    limits = c(0, max(states_filtered$new_cases + 300))) +
             # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
             ggtitle(paste("New daily CoVID-19 cases by State \n (data downloaded from github.com/nytimes/covid-19-data on", Sys.Date(), ")")) +
             theme(
