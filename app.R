@@ -45,7 +45,8 @@ ui <- navbarPage("CoVID cases by country and state",
              br(),
              print(paste("Country data collected from ecdc.europa.eu on", Sys.Date())),
              br(),
-             print("Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19")),
+             print("Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19"),
+             br()),
     
     ## States
     tabPanel("US states and counties",
@@ -100,7 +101,8 @@ ui <- navbarPage("CoVID cases by country and state",
     br(),
     print(paste("State and county data collected from github.com/nytimes/covid-19-data on", Sys.Date())),
     br(),
-    print("\n Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19")))
+    print("\n Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19")),
+    br())
 
 server <- function(input, output) {
     
@@ -135,6 +137,8 @@ server <- function(input, output) {
         countries_filtered <- countries_raw%>%
             filter(country %in% input$country_select)
         
+        number_countries_country <- length(input$country_select)
+        
         countries_filtered%>%
             ggplot(aes(date, plot, color = country)) +
             geom_line() +
@@ -144,7 +148,7 @@ server <- function(input, output) {
             ylab(input$data_type_country) +
             scale_y_log10(limits = c(1, max(countries_filtered$plot + 5000)),
                           breaks = trans_breaks("log10", function(x) 10^x)) +
-            # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
+            scale_color_manual(values = wes_palette("Darjeeling1", number_countries_country, type = c('continuous'))) +
             ggtitle("CoVID-19 cases by country") +
             theme(
                 axis.text.x = element_text(angle = 60, size = 15, hjust = 1),
@@ -186,6 +190,8 @@ server <- function(input, output) {
         states_filtered <- state_raw%>%
             filter(state %in% input$state_select)
         
+        number_countries_state <- length(input$state_select)
+        
         states_filtered%>%
             ggplot(aes(date, plot, color = state)) +
             geom_line() +
@@ -194,7 +200,7 @@ server <- function(input, output) {
             xlab(paste("Date (past", input$previous_days_state, "days)")) +
             ylab(input$data_type_state) +
             scale_y_log10() + 
-            # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
+            scale_color_manual(values = wes_palette("Darjeeling1", number_countries_state, type = c('continuous'))) +
             ggtitle("CoVID-19 cases by state") +
             theme(
                 axis.text.x = element_text(angle = 60, size = 15, hjust = 1),
@@ -246,6 +252,8 @@ server <- function(input, output) {
             filter(state %in% input$statecounty_select)%>%
             filter(county %in% input$county_select)
         
+        number_countries_county <- length(input$county_select)
+        
         counties_filtered%>%
             ggplot(aes(date, plot, color = county)) +
             geom_line() +
@@ -254,7 +262,7 @@ server <- function(input, output) {
             xlab(paste("Date (past", input$previous_days_state, "days)")) +
             ylab(input$data_type_state) +
             scale_y_log10() + 
-            # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
+            scale_color_manual(values = wes_palette("Darjeeling1", number_countries_county, type = c('continuous'))) +
             ggtitle(paste("CoVID-19 cases by county in",
                           input$statecounty_select)) +
             theme(
