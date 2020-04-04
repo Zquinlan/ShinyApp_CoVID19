@@ -14,14 +14,14 @@ ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(
             sliderInput(inputId = "previous_days",
-                        label = "Number of Days",
+                        label = "Number of Days:",
                         min = 1,
                         max = 70,
                         v = 50
             ),
             ## Input country selector
             selectInput(inputId = "country_select",
-                        label = "Countries",
+                        label = "Countries:",
                         choices = str_sort(c("United States of America", "China", "United Kingdom", "Sweden", "Germany",
                                     "Italy", "France", "Spain", "South Korea", "Switzerland", "New Zealand", "Israel",
                                     "Thailand", "Vietnam", "Singapore", "Netherlands", "Mexico", "Japan", "Australia",
@@ -40,7 +40,7 @@ ui <- fluidPage(
         
         sidebarPanel(
             selectInput(inputId = "state_select",
-                        label = "States",
+                        label = "States:",
                         choices = c(state.name%>% as.vector()),
                         selected = c("Colorado", "California", "Washington", "Utah", "New Jersey"),
                         multiple = TRUE)
@@ -56,7 +56,7 @@ ui <- fluidPage(
     sidebarLayout(
         sidebarPanel(
             selectInput(inputId = "statecounty_select",
-                        label = "State",
+                        label = "State:",
                         choices = c(state.name%>% as.vector()),
                         selected = "California",
                         multiple = FALSE
@@ -84,8 +84,7 @@ server <- function(input, output) {
             rename(date = dateRep,
                    country = countriesAndTerritories)%>%
             select(date, cases, deaths, country)%>%
-            mutate(date = as.Date(date, "%d/%m/%y"),
-                   location_type = "country")%>%
+            mutate(date = as.Date(date, "%d/%m/%y"))%>%
             mutate(country = gsub("_", " ", country),
                    country = case_when(country == "CuraÃ§ao" ~ "Curacao",
                                        TRUE ~ as.character(country)))%>%
@@ -165,7 +164,7 @@ server <- function(input, output) {
         counties_filter_df <- read_csv("https://raw.githubusercontent.com/Zquinlan/ShinyApp_CoVID19/master/counties_filter_df.csv")
         
             selectInput(inputId = "county_select",
-                        label = "County",
+                        label = "Counties:",
                         choices = c((counties_filter_df%>%
                                         filter(state == input$statecounty_select))$county%>%
                                         as.factor()%>%
