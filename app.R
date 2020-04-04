@@ -53,7 +53,6 @@ ui <- fluidPage(
         )
     ),
     
-    counties_filter_df <- read_csv("https://raw.githubusercontent.com/")
     #County
     sidebarLayout(
         sidebarPanel(
@@ -64,17 +63,7 @@ ui <- fluidPage(
                         multiple = FALSE
                 
             ),
-            selectInput(inputId = "county_select",
-                        label = "County",
-                        choices = (counties_filter_df%>%
-                            filter(state == input$statecounty_select))$county%>%
-                            as.factor()%>%
-                            levels(),
-                        selected = (counties_filter_df%>%
-                                        filter(state == input$statecounty_select))$county%>%
-                            as.factor()%>%
-                            levels(),
-                        multiple = TRUE)
+            uiOutput("secondSelection"),
         ),
         mainPanel(
             plotOutput(outputId = "county_plot")
@@ -171,7 +160,22 @@ server <- function(input, output) {
                 legend.box.background = element_rect(fill = "transparent"),
                 plot.title = element_text(hjust = 0.5, size = 30)) 
     })
-    
+    output$secondSelection <- renderUI({
+        counties_filter_df <- read_csv("https://raw.githubusercontent.com/Zquinlan/ShinyApp_CoVID19/master/counties_filter_df.csv")
+        
+            selectInput(inputId = "county_select",
+                        label = "County",
+                        choices = c((counties_filter_df%>%
+                                        filter(state == input$statecounty_select))$county%>%
+                                        as.factor()%>%
+                                        levels()),
+                        selected = c((counties_filter_df%>%
+                                        filter(state == input$statecounty_select))$county%>%
+                            as.factor()%>%
+                            levels())[1:10],
+                        multiple = TRUE)
+        })
+        
     output$county_plot <- renderPlot({
         county_url <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv"
         
@@ -200,7 +204,8 @@ server <- function(input, output) {
             scale_y_log10() + 
             # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
             ggtitle(paste("New daily CoVID-19 cases by county in",
-                          input$statecounty_select, "\n (data downloaded from github.com/nytimes/covid-19-data on", Sys.Date(), ")")) +
+                          input$statecounty_select, 
+                          "\n (data downloaded from github.com/nytimes/covid-19-data on", Sys.Date(), ")")) +
             theme(
                 axis.text.x = element_text(angle = 60, size = 10, hjust = 1),
                 panel.background = element_rect(fill = "transparent"), 
