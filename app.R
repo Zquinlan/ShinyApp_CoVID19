@@ -28,8 +28,7 @@ ui <- fluidPage(
                                     "Palestine", "Curacao", "South Africa", "Colombia", "Argentina", "Costa Rica", "Ecuador",
                                     "Brazil")),
                         selected = c("United States of America", "China", "Germany", "Italy"),
-                        multiple = TRUE)
-        ),
+                        multiple = TRUE)),
         mainPanel(
             #Output of country
             plotOutput(outputId = "country_plot"
@@ -78,19 +77,20 @@ server <- function(input, output) {
     output$country_plot <- renderPlot( {
         #plotting
         ## Download country data
-        url <- paste("https://www.ecdc.europa.eu/sites/default/files/documents/COVID-19-geographic-disbtribution-worldwide-",format(Sys.time(), "%Y-%m-%d"), ".xlsx", sep = "")
-        GET(url, authenticate(":", ":", type="ntlm"), write_disk(tf <- tempfile(fileext = ".xlsx")))
+        GET("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv", authenticate(":", ":", type="ntlm"), write_disk(tf <- tempfile(fileext = ".csv")))
         
         ## read in dfs
-        countries_raw <-read_excel(tf)%>%
+        countries_raw <-read_csv(tf)%>%
             rename(date = dateRep,
                    country = countriesAndTerritories)%>%
             select(date, cases, deaths, country)%>%
-            mutate(date = as.Date(date),
+            mutate(date = as.Date(date, "%d/%m/%y"),
                    location_type = "country")%>%
             mutate(country = gsub("_", " ", country),
                    country = case_when(country == "CuraÃ§ao" ~ "Curacao",
-                                       TRUE ~ as.character(country)))
+                                       TRUE ~ as.character(country)))%>%
+            filter(date != "2020-12-31")
+        
         
         #Pulls in the input countries
         countries_filtered <- countries_raw%>%
@@ -116,7 +116,7 @@ server <- function(input, output) {
                 panel.grid.major.x = element_line(size = 0.2, linetype = 'solid',colour = "gray"),
                 legend.background = element_rect(fill = "transparent"), 
                 legend.box.background = element_rect(fill = "transparent"),
-                plot.title = element_text(hjust = 0.5, size = 30)) 
+                plot.title = element_text(hjust = 0.5, size = 25)) 
     })
     
     output$state_plot <- renderPlot({
@@ -160,6 +160,7 @@ server <- function(input, output) {
                 legend.box.background = element_rect(fill = "transparent"),
                 plot.title = element_text(hjust = 0.5, size = 30)) 
     })
+    
     output$secondSelection <- renderUI({
         counties_filter_df <- read_csv("https://raw.githubusercontent.com/Zquinlan/ShinyApp_CoVID19/master/counties_filter_df.csv")
         
@@ -169,10 +170,7 @@ server <- function(input, output) {
                                         filter(state == input$statecounty_select))$county%>%
                                         as.factor()%>%
                                         levels()),
-                        selected = c((counties_filter_df%>%
-                                        filter(state == input$statecounty_select))$county%>%
-                            as.factor()%>%
-                            levels())[1:10],
+                        selected = c("San Diego", "Los Angeles", "San Francisco", "Humboldt", "Riverside"),
                         multiple = TRUE)
         })
         
@@ -215,7 +213,7 @@ server <- function(input, output) {
                 panel.grid.major.x = element_line(size = 0.2, linetype = 'solid',colour = "gray"),
                 legend.background = element_rect(fill = "transparent"), 
                 legend.box.background = element_rect(fill = "transparent"),
-                plot.title = element_text(hjust = 0.5, size = 30)) 
+                plot.title = element_text(hjust = 0.5, size = 25)) 
         
     })
 }
