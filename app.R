@@ -8,9 +8,6 @@ ui <- navbarPage("CoVID cases by country and state",
     
     ## Countries
     tabPanel("Countries",
-             titlePanel(paste("Country data collected from ecdc.europa.eu on", Sys.Date())),
-             br(),
-             br(),
              sidebarLayout(
                  sidebarPanel(
                      #Number of days on X axis
@@ -41,13 +38,17 @@ ui <- navbarPage("CoVID cases by country and state",
              mainPanel(
                  #Output of country
                  plotOutput(outputId = "country_plot")
-             ))),
+             )),
+             hr(),
+             print("For up to date information on CoVID-19 visit https://viralization.org/covid19.php"),
+             br(),
+             br(),
+             print(paste("Country data collected from ecdc.europa.eu on", Sys.Date())),
+             br(),
+             print("Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19")),
     
     ## States
     tabPanel("US states and counties",
-             titlePanel(paste("State and county data collected from github.com/nytimes/covid-19-data on", Sys.Date())),
-             br(),
-             br(),
     sidebarLayout(
         sidebarPanel(
             #Day Slider
@@ -76,7 +77,7 @@ ui <- navbarPage("CoVID cases by country and state",
             )
         )
     ),
-    
+    br(),
     #County
     sidebarLayout(
         sidebarPanel(
@@ -92,7 +93,14 @@ ui <- navbarPage("CoVID cases by country and state",
         mainPanel(
             plotOutput(outputId = "county_plot")
         )
-    )))
+    ),
+    hr(),
+    print("For up to date information on CoVID-19 visit https://viralization.org/covid19.php"),
+    br(),
+    br(),
+    print(paste("State and county data collected from github.com/nytimes/covid-19-data on", Sys.Date())),
+    br(),
+    print("\n Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19")))
 
 server <- function(input, output) {
     
@@ -137,9 +145,11 @@ server <- function(input, output) {
             scale_y_log10(limits = c(1, max(countries_filtered$plot + 5000)),
                           breaks = trans_breaks("log10", function(x) 10^x)) +
             # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
-            ggtitle("New daily CoVID-19 cases by country") +
+            ggtitle("CoVID-19 cases by country") +
             theme(
-                axis.text.x = element_text(angle = 60, size = 10, hjust = 1),
+                axis.text.x = element_text(angle = 60, size = 15, hjust = 1),
+                axis.text.y = element_text(size = 15),
+                axis.title = element_text(size = 17),
                 panel.background = element_rect(fill = "transparent"), 
                 plot.background = element_rect(fill = "transparent", color = NA), 
                 panel.grid.major.y = element_line(size = 0.2, linetype = 'solid',colour = "gray"),
@@ -147,6 +157,9 @@ server <- function(input, output) {
                 panel.grid.major.x = element_line(size = 0.2, linetype = 'solid',colour = "gray"),
                 legend.background = element_rect(fill = "transparent"), 
                 legend.box.background = element_rect(fill = "transparent"),
+                legend.text = element_text(size = 15),
+                legend.title = element_blank(),
+                legend.position = "top",
                 plot.title = element_text(hjust = 0.5, size = 25)) 
     })
     
@@ -182,9 +195,11 @@ server <- function(input, output) {
             ylab(input$data_type_state) +
             scale_y_log10() + 
             # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
-            ggtitle("New daily CoVID-19 cases by state") +
+            ggtitle("CoVID-19 cases by state") +
             theme(
-                axis.text.x = element_text(angle = 60, size = 10, hjust = 1),
+                axis.text.x = element_text(angle = 60, size = 15, hjust = 1),
+                axis.text.y = element_text(size = 15),
+                axis.title = element_text(size = 17),
                 panel.background = element_rect(fill = "transparent"), 
                 plot.background = element_rect(fill = "transparent", color = NA), 
                 panel.grid.major.y = element_line(size = 0.2, linetype = 'solid',colour = "gray"), 
@@ -192,6 +207,9 @@ server <- function(input, output) {
                 panel.grid.major.x = element_line(size = 0.2, linetype = 'solid',colour = "gray"),
                 legend.background = element_rect(fill = "transparent"), 
                 legend.box.background = element_rect(fill = "transparent"),
+                legend.text = element_text(size = 15),
+                legend.title = element_blank(),
+                legend.position = "top",
                 plot.title = element_text(hjust = 0.5, size = 30)) 
     })
     output$secondSelection <- renderUI({
@@ -237,10 +255,12 @@ server <- function(input, output) {
             ylab(input$data_type_state) +
             scale_y_log10() + 
             # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
-            ggtitle(paste("New daily CoVID-19 cases by county in",
+            ggtitle(paste("CoVID-19 cases by county in",
                           input$statecounty_select)) +
             theme(
-                axis.text.x = element_text(angle = 60, size = 10, hjust = 1),
+                axis.text.x = element_text(angle = 60, size = 15, hjust = 1),
+                axis.text.y = element_text(size = 15),
+                axis.title = element_text(size = 17),
                 panel.background = element_rect(fill = "transparent"), 
                 plot.background = element_rect(fill = "transparent", color = NA), 
                 panel.grid.major.y = element_line(size = 0.2, linetype = 'solid',colour = "gray"), 
@@ -248,6 +268,9 @@ server <- function(input, output) {
                 panel.grid.major.x = element_line(size = 0.2, linetype = 'solid',colour = "gray"),
                 legend.background = element_rect(fill = "transparent"), 
                 legend.box.background = element_rect(fill = "transparent"),
+                legend.text = element_text(size = 15),
+                legend.title = element_blank(),
+                legend.position = "top",
                 plot.title = element_text(hjust = 0.5, size = 25)) 
         
     })
