@@ -51,6 +51,34 @@ ui <- fluidPage(
             plotOutput(outputId = "state_plot"
             )
         )
+    ),
+    
+    counties_filter_df <- read_csv("https://raw.githubusercontent.com/")
+    #County
+    sidebarLayout(
+        sidebarPanel(
+            selectInput(inputId = "statecounty_select",
+                        label = "State",
+                        choices = c(state.name%>% as.vector()),
+                        selected = "California",
+                        multiple = FALSE
+                
+            ),
+            selectInput(inputId = "county_select",
+                        label = "County",
+                        choices = (counties_filter_df%>%
+                            filter(state == input$statecounty_select))$county%>%
+                            as.factor()%>%
+                            levels(),
+                        selected = (counties_filter_df%>%
+                                        filter(state == input$statecounty_select))$county%>%
+                            as.factor()%>%
+                            levels(),
+                        multiple = TRUE)
+        ),
+        mainPanel(
+            plotOutput(outputId = "county_plot")
+        )
     ))
 
 server <- function(input, output) {
@@ -119,7 +147,6 @@ server <- function(input, output) {
             ungroup()
         
         #Filter out states selected
-        
         states_filtered <- state_raw%>%
             filter(state %in% input$state_select)
         
@@ -143,6 +170,48 @@ server <- function(input, output) {
                 legend.background = element_rect(fill = "transparent"), 
                 legend.box.background = element_rect(fill = "transparent"),
                 plot.title = element_text(hjust = 0.5, size = 30)) 
+    })
+    
+    output$county_plot <- renderPlot({
+        county_url <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv"
+        
+        counties_raw <- read_csv(url(county_url))%>%
+            select(-fips)%>%
+            mutate(date = as.Date(date))%>%
+            group_by(state, county)%>%
+            arrange(date)%>%
+            mutate(new_cases = cases - lag(cases, default = first(date)),
+                   new_cases = case_when(new_cases < 0 ~ 0,
+                                         TRUE ~ as.numeric(new_cases)))%>%
+            ungroup()
+        
+        ## Plotting
+        counties_filtered <- counties_raw%>%
+            filter(state %in% input$statecounty_select)%>%
+            filter(county %in% input$county_select)
+        
+        counties_filtered%>%
+            ggplot(aes(date, new_cases, color = county)) +
+            geom_line() +
+            geom_point() +
+            scale_x_date(date_breaks = "4 days", limits = c(Sys.Date() - input$previous_days, NA), date_labels = "%b %d") +
+            xlab(paste("Date (past", input$previous_days, "days)")) +
+            ylab("New Cases") +
+            scale_y_log10() + 
+            # scale_color_manual(values = wes_palette("Darjeeling1", 5, type = c('discrete'))) +
+            ggtitle(paste("New daily CoVID-19 cases by county in",
+                          input$statecounty_select, "\n (data downloaded from github.com/nytimes/covid-19-data on", Sys.Date(), ")")) +
+            theme(
+                axis.text.x = element_text(angle = 60, size = 10, hjust = 1),
+                panel.background = element_rect(fill = "transparent"), 
+                plot.background = element_rect(fill = "transparent", color = NA), 
+                panel.grid.major.y = element_line(size = 0.2, linetype = 'solid',colour = "gray"), 
+                panel.grid.minor.y = element_line(size = 0.2, linetype = 'solid',colour = "gray"), 
+                panel.grid.major.x = element_line(size = 0.2, linetype = 'solid',colour = "gray"),
+                legend.background = element_rect(fill = "transparent"), 
+                legend.box.background = element_rect(fill = "transparent"),
+                plot.title = element_text(hjust = 0.5, size = 30)) 
+        
     })
 }
 
