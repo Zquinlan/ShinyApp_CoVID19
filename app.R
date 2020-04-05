@@ -79,7 +79,13 @@ ui <- navbarPage("CoVID cases by country and state",
                         choices = c("Cases per day",
                                     "Total Confirmed Cases",
                                     "Deaths"),
-                        selected = "Cases per day")
+                        selected = "Cases per day"),
+            radioButtons(inputId = "pop_divider_state",
+                         label = "Data relativization:",
+                         choices = c("Not relativized", 
+                                     "Percent of Population",
+                                     "Cases per 100,000 people"),
+                         selected = "Not relativized")
         ),
         mainPanel(
             #Output of state
@@ -113,15 +119,29 @@ ui <- navbarPage("CoVID cases by country and state",
     print("\n Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19"),
     br()),
     tabPanel("Information",
-             h1("Further information about data represented in this app and CoVID-19"),
-             print("For more information on CoVID-19 and rational responses to the pandemic please go to the Viral information
-                   Institute (VII; https://viralization.org/covid19.php)"),
+             h1("Why Did I make this?"),
+             print("There are a lot of really great web apps and plot already available to the public. 
+                   I specifically made this one because I was not finding an addequate way to compare state and county data
+                   how I wanted to. Moreover, a lot of my friends, family, and commuity members have been feeling like they 
+                   have zero control over this whole situation or the data which they are presented. I built this in the hopes 
+                   that it would give people who are not data-oriented or maybe just didn't have the time a quick way to look 
+                   at the datamthemselves without having to read more news about the situation. I am always looking for ways
+                   to improve this or give people more data to look at. If you do have any suggestions, do not hesitate to
+                   contact me directly (email is below)."),
+             br(),
+             br(),
+             print("I hope that it helps you during this time; stay safe and healthy <3"),
+             br(),
+             br(),
+             h3("Further information on CoVID-19"),
+             print("For more information on CoVID-19 and rational responses to the pandemic, I reccomend going to 
+             The Viral Information Institute (VII; https://viralization.org/covid19.php)"),
              br(),
              br(),
              h3("Caveats and Acknowledgements"),
              hr(),
-             print("US Census data for states and counties is from 2010 as the new census data has not yet been reported.
-                   Country population data is from 2018. As such, any relativizations done by population have inherint error."),
+             print("US Census data for states and counties is from 2018 as the new census data has not yet been reported.
+                   Country population data is from 2018. As such, any relativizations done by population have inherent error."),
              br(),
              br(),
              h5("Data is not my own and was downloaded directly from:"),
@@ -129,7 +149,7 @@ ui <- navbarPage("CoVID cases by country and state",
              br(),
              print("The European Center for Disease Control"),
              br(),
-             print("The 2010 US Census report"),
+             print("The 2010-2018 US Census report"),
              br(),
              br(),
              br(),
@@ -139,9 +159,6 @@ ui <- navbarPage("CoVID cases by country and state",
     )
 
 server <- function(input, output) {
-    
-    
-    
     
     output$country_plot <- renderPlot( {
         #plotting
@@ -204,12 +221,19 @@ server <- function(input, output) {
                 legend.position = "top",
                 plot.title = element_text(hjust = 0.5, size = 25)) 
     })
-    
     output$state_plot <- renderPlot({
         # Downlaod state data
         state_url <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-states.csv"
+        census_url <- "https://raw.githubusercontent.com/Zquinlan/ShinyApp_CoVID19/master/us_census_data.csv"
         
         #read and clean the state data
+        county_census <- read_csv(url(census_url))%>%
+            mutate(population = as.numeric(population))
+        
+        state_census <- county_census%>%
+            group_by(state)%>%
+            summarize_if(is.numeric, sum)
+        
         state_raw <- read_csv(url(state_url))%>%
             select(-fips)%>%
             mutate(date = as.Date(date))%>%
@@ -221,8 +245,12 @@ server <- function(input, output) {
             rename(`Total Confirmed Cases` = cases,
                    Deaths = deaths)%>%
             ungroup()%>%
-            select(date, state, input$data_type_state)%>%
-            rename(plot = 3)
+            left_join(state_census, by = "state")%>%
+            select(date, state, input$data_type_state, population)%>%
+            rename(plot = 3)%>%
+            mutate(plot = case_when(input$pop_divider_state == "Not relativized" ~ plot,
+                                    input$pop_divider_state == "Percent of Population" ~ plot/population*100,
+                                    input$pop_divider_state == "Cases per 100,000 people" ~ plot/population*100000))
         
         #Filter out states selected
         states_filtered <- state_raw%>%
@@ -236,7 +264,7 @@ server <- function(input, output) {
             geom_point() +
             scale_x_date(date_breaks = "4 days", limits = c(Sys.Date() - input$previous_days_state, NA), date_labels = "%b %d") +
             xlab(paste("Date (past", input$previous_days_state, "days)")) +
-            ylab(input$data_type_state) +
+            ylab(paste(input$data_type_state, " (", input$pop_divider_state, ")", sep = "")) +
             scale_y_log10() + 
             scale_color_manual(values = wes_palette("Darjeeling1", number_countries_state, type = c('continuous'))) +
             ggtitle("CoVID-19 cases by state") +
@@ -269,8 +297,15 @@ server <- function(input, output) {
                         multiple = TRUE)
         })
     output$county_plot <- renderPlot({
+        # Defining URL for county data
         county_url <- "https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv"
+        census_url <- "https://raw.githubusercontent.com/Zquinlan/ShinyApp_CoVID19/master/us_census_data.csv"
         
+        #read and clean the state data
+        county_census <- read_csv(url(census_url))%>%
+            mutate(population = as.numeric(population))
+        
+        #Reading in and cleaning dataframes
         counties_raw <- read_csv(url(county_url))%>%
             select(-fips)%>%
             mutate(date = as.Date(date))%>%
@@ -282,8 +317,12 @@ server <- function(input, output) {
             rename(`Total Confirmed Cases` = cases,
                    Deaths = deaths)%>%
             ungroup()%>%
-            select(date, state, county, input$data_type_state)%>%
-            rename(plot = 4)
+            left_join(county_census, by = c("state", "county"))%>%
+            select(date, state, county, input$data_type_state, population)%>%
+            rename(plot = 4)%>%
+            mutate(plot = case_when(input$pop_divider_state == "Not relativized" ~ plot,
+                             input$pop_divider_state == "Percent of Population" ~ plot/population*100,
+                             input$pop_divider_state == "Cases per 100,000 people" ~ plot/population*100000))
         
         ## Plotting
         counties_filtered <- counties_raw%>%
@@ -298,7 +337,7 @@ server <- function(input, output) {
             geom_point() +
             scale_x_date(date_breaks = "4 days", limits = c(Sys.Date() - input$previous_days_state, NA), date_labels = "%b %d") +
             xlab(paste("Date (past", input$previous_days_state, "days)")) +
-            ylab(input$data_type_state) +
+            ylab(paste(input$data_type_state, " (", input$pop_divider_state, ")", sep = "")) +
             scale_y_log10() + 
             scale_color_manual(values = wes_palette("Darjeeling1", number_countries_county, type = c('continuous'))) +
             ggtitle(paste("CoVID-19 cases by county in",
