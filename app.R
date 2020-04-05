@@ -24,7 +24,7 @@ ui <- navbarPage("CoVID cases by country and state",
                                                       "Italy", "France", "Spain", "South Korea", "Switzerland", "New Zealand", "Israel",
                                                       "Thailand", "Vietnam", "Singapore", "Netherlands", "Mexico", "Japan", "Australia",
                                                       "Palestine", "Curacao", "South Africa", "Colombia", "Argentina", "Costa Rica", "Ecuador",
-                                                      "Brazil")),
+                                                      "Brazil", "Egypt", "India")),
                                  selected = c("United States of America", "China", "Germany", "Italy"),
                                  multiple = TRUE),
                      
@@ -34,7 +34,14 @@ ui <- navbarPage("CoVID cases by country and state",
                                  choices = c("Cases per day",
                                              "Total Confirmed Cases",
                                              "Deaths"),
-                                 selected = "Cases per day")),
+                                 selected = "Cases per day"),
+                     radioButtons(inputId = "pop_divider_country",
+                                  label = "Data relativization:",
+                                  choices = c("Not relativized", 
+                                              "Percent of Population",
+                                              "Cases per 100,000 people"),
+                                  selected = "Not relativized"
+                                  )),
              mainPanel(
                  #Output of country
                  plotOutput(outputId = "country_plot")
@@ -103,8 +110,33 @@ ui <- navbarPage("CoVID cases by country and state",
     print(paste("State and county data collected from github.com/nytimes/covid-19-data on", Sys.Date())),
     br(),
     br(),
-    print("\n Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19")),
-    br())
+    print("\n Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19"),
+    br()),
+    tabPanel("Information",
+             h1("Further information about data represented in this app and CoVID-19"),
+             print("For more information on CoVID-19 and rational responses to the pandemic please go to the Viral information
+                   Institute (VII; https://viralization.org/covid19.php)"),
+             br(),
+             br(),
+             h3("Caveats and Acknowledgements"),
+             hr(),
+             print("US Census data for states and counties is from 2010 as the new census data has not yet been reported.
+                   Country population data is from 2018. As such, any relativizations done by population have inherint error."),
+             br(),
+             br(),
+             h5("Data is not my own and was downloaded directly from:"),
+             print("The New York Times (Github.com/nytimes/covid-19-data"),
+             br(),
+             print("The European Center for Disease Control"),
+             br(),
+             print("The 2010 US Census report"),
+             br(),
+             br(),
+             br(),
+             print("\n Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19"),
+             br(),
+             print("Suggestions or comments please email Zquinlan@ucsd.edu"))
+    )
 
 server <- function(input, output) {
     
@@ -124,14 +156,18 @@ server <- function(input, output) {
                    Deaths = deaths)%>%
             group_by(country)%>%
             arrange(date)%>%
-            mutate(`Total Confirmed Cases` = cumsum(`Cases per day`))%>%
+            mutate(`Total Confirmed Cases` = cumsum(`Cases per day`),
+                   )%>%
             ungroup()%>%
-            select(date, country, input$data_type_country)%>%
+            select(date, country, input$data_type_country, popData2018)%>%
             rename(plot = 3)%>%
             mutate(date = as.Date(date, "%d/%m/%y"),
                    country = gsub("_", " ", country),
                    country = case_when(country == "CuraÃ§ao" ~ "Curacao",
-                                       TRUE ~ as.character(country)))%>%
+                                       TRUE ~ as.character(country)),
+                   plot = case_when(input$pop_divider_country == "Not relativized" ~ plot,
+                                    input$pop_divider_country == "Percent of Population" ~ plot/popData2018*100,
+                                    input$pop_divider_country == "Cases per 100,000 people" ~ plot/popData2018*100000))%>%
             filter(date != "2020-12-31")
         
         
@@ -147,8 +183,8 @@ server <- function(input, output) {
             geom_point() +
             scale_x_date(date_breaks = "4 days", limits = c(Sys.Date() - input$previous_days_country, NA), date_labels = "%b %d") +
             xlab(paste("Date (past", input$previous_days_country, "days)")) +
-            ylab(input$data_type_country) +
-            scale_y_log10(limits = c(1, max(countries_filtered$plot + 5000)),
+            ylab(paste(input$data_type_country, " (", input$pop_divider_country, ")", sep = "")) +
+            scale_y_log10(limits = c(min(countries_filtered$plot - 1), max(countries_filtered$plot + .05*max(countries_filtered$plot))),
                           breaks = trans_breaks("log10", function(x) 10^x)) +
             scale_color_manual(values = wes_palette("Darjeeling1", number_countries_country, type = c('continuous'))) +
             ggtitle("CoVID-19 cases by country") +
