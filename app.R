@@ -119,7 +119,7 @@ ui <- navbarPage("CoVID cases by country and state",
     print("\n Shiny App built by Zach Quinlan. Code can be found at https://github.com/Zquinlan/ShinyApp_CoVID19"),
     br()),
     tabPanel("Information",
-             h1("Why Did I make this?"),
+             h1("Why did I make this?"),
              print("There are a lot of really great web apps and plot already available to the public. 
                    I specifically made this one because I was not finding an addequate way to compare state and county data
                    how I wanted to. Moreover, a lot of my friends, family, and commuity members have been feeling like they 
@@ -133,9 +133,12 @@ ui <- navbarPage("CoVID cases by country and state",
              print("I hope that it helps you during this time; stay safe and healthy <3"),
              br(),
              br(),
-             h3("Further information on CoVID-19"),
-             print("For more information on CoVID-19 and rational responses to the pandemic, I reccomend going to 
+             h3("CoVID-19 Resources:"),
+             print("- More information on CoVID-19 and rational responses to the pandemic, can be found at 
              The Viral Information Institute (VII; https://viralization.org/covid19.php)"),
+             br(),
+             print("- Another great shiny app to compare countries trejectories in terms of days post infection
+                   can be found at https://robinhweide.shinyapps.io/Covid-19_shifter/"),
              br(),
              br(),
              h3("Caveats and Acknowledgements"),
