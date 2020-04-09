@@ -14,7 +14,7 @@ ui <- navbarPage("CoVID cases by country and state",
                      sliderInput(inputId = "previous_days_country",
                                  label = "Number of Days:",
                                  min = 1,
-                                 max = 70,
+                                 max = 100,
                                  v = 50),
                      
                      ## Input country selector
@@ -23,7 +23,7 @@ ui <- navbarPage("CoVID cases by country and state",
                                  choices = str_sort(c("United States of America", "China", "United Kingdom", "Sweden", "Germany",
                                                       "Italy", "France", "Spain", "South Korea", "Switzerland", "New Zealand", "Israel",
                                                       "Thailand", "Vietnam", "Singapore", "Netherlands", "Mexico", "Japan", "Australia",
-                                                      "Palestine", "Curacao", "South Africa", "Colombia", "Argentina", "Costa Rica", "Ecuador",
+                                                      "Palestine", "Curaçao", "South Africa", "Colombia", "Argentina", "Costa Rica", "Ecuador",
                                                       "Brazil", "Egypt", "India")),
                                  selected = c("United States of America", "China", "Germany", "Italy"),
                                  multiple = TRUE),
@@ -32,8 +32,9 @@ ui <- navbarPage("CoVID cases by country and state",
                      selectInput(inputId = "data_type_country",
                                  label = "Plotted Data:",
                                  choices = c("Cases per day",
-                                             "Total Confirmed Cases",
-                                             "Deaths"),
+                                             "Total confirmed cases",
+                                             "Deaths per day",
+                                             "Total confirmed deaths"),
                                  selected = "Cases per day"),
                      radioButtons(inputId = "pop_divider_country",
                                   label = "Data relativization:",
@@ -65,7 +66,7 @@ ui <- navbarPage("CoVID cases by country and state",
             sliderInput(inputId = "previous_days_state",
                         label = "Number of Days:",
                         min = 1,
-                        max = 70,
+                        max = 100,
                         v = 50),
             #State Selector
             selectInput(inputId = "state_select",
@@ -77,8 +78,9 @@ ui <- navbarPage("CoVID cases by country and state",
             selectInput(inputId = "data_type_state",
                         label = "Plotted Data:",
                         choices = c("Cases per day",
-                                    "Total Confirmed Cases",
-                                    "Deaths"),
+                                    "Total confirmed cases",
+                                    "Deaths per day",
+                                    "Total confirmed deaths"),
                         selected = "Cases per day"),
             radioButtons(inputId = "pop_divider_state",
                          label = "Data relativization:",
@@ -120,13 +122,13 @@ ui <- navbarPage("CoVID cases by country and state",
     br()),
     tabPanel("Information",
              h1("Why did I make this?"),
-             print("There are a lot of really great web apps and plot already available to the public. 
-                   I specifically made this one because I was not finding an addequate way to compare state and county data
-                   how I wanted to. Moreover, a lot of my friends, family, and commuity members have been feeling like they 
-                   have zero control over this whole situation or the data which they are presented. I built this in the hopes 
-                   that it would give people who are not data-oriented or maybe just didn't have the time a quick way to look 
-                   at the datamthemselves without having to read more news about the situation. I am always looking for ways
-                   to improve this or give people more data to look at. If you do have any suggestions, do not hesitate to
+             print("There are a lot of really great web apps, models and data visualizations already available to the public. 
+                   I specifically made this one because I could not find an addequate way to compare live US state and county data
+                   how I wanted to. Moreover, many of my friends, family, and community members have been feeling like they 
+                   have little control over this situation or the data which they are presented. I built this in the hope 
+                   that it would give people who are not data-oriented (or just don't have the time) a quick way to view 
+                   the data themselves without having to sift through more unpleasant news articles. I am always looking for ways
+                   to improve this app or provide new data to visualize. If you do have any suggestions, do not hesitate to
                    contact me directly (email is below)."),
              br(),
              br(),
@@ -134,12 +136,16 @@ ui <- navbarPage("CoVID cases by country and state",
              br(),
              br(),
              h3("CoVID-19 Resources:"),
-             print("- More information on CoVID-19 and rational responses to the pandemic, can be found at 
+             print("- More information on CoVID-19 and rational responses to the pandemic can be found at 
              The Viral Information Institute (VII; https://viralization.org/covid19.php)"),
              br(),
-             print("- Another great shiny app to compare countries trejectories in terms of days post infection
+             print("- Another great shiny app to compare countries' trajectories by days post infection
                    can be found at https://robinhweide.shinyapps.io/Covid-19_shifter/"),
              br(),
+             print("- While projections and models of pandemics and ever changing scenarios have many caveats, I have found
+                  that the people behind https://www.covidactnow.org/ have done a great job. The model on their site 
+                  makes projections by US state and county for the number of hospitalizations we could expect under differing
+                  stay-at-home compliance scenarios."),
              br(),
              h3("Caveats and Acknowledgements"),
              hr(),
@@ -173,18 +179,16 @@ server <- function(input, output) {
             rename(date = dateRep,
                    country = countriesAndTerritories,
                    `Cases per day` = `cases`,
-                   Deaths = deaths)%>%
+                   `Deaths per day` = deaths)%>%
+            mutate(date = as.Date(date, "%d/%m/%y"))%>%
             group_by(country)%>%
             arrange(date)%>%
-            mutate(`Total Confirmed Cases` = cumsum(`Cases per day`),
-                   )%>%
+            mutate(`Total confirmed cases` = as.numeric(cumsum(`Cases per day`)),
+                   `Total confirmed deaths` = as.numeric(cumsum(`Deaths per day`)))%>%
             ungroup()%>%
             select(date, country, input$data_type_country, popData2018)%>%
             rename(plot = 3)%>%
-            mutate(date = as.Date(date, "%d/%m/%y"),
-                   country = gsub("_", " ", country),
-                   country = case_when(country == "CuraÃ§ao" ~ "Curacao",
-                                       TRUE ~ as.character(country)),
+            mutate(country = gsub("_", " ", country),
                    plot = case_when(input$pop_divider_country == "Not relativized" ~ plot,
                                     input$pop_divider_country == "Percent of Population" ~ plot/popData2018*100,
                                     input$pop_divider_country == "Cases per 100,000 people" ~ plot/popData2018*100000))%>%
@@ -244,9 +248,12 @@ server <- function(input, output) {
             arrange(date)%>%
             mutate(`Cases per day` = cases - lag(cases, default = first(date)),
                    `Cases per day` = case_when(`Cases per day` < 0 ~ 0,
-                                         TRUE ~ as.numeric(`Cases per day`)))%>%
-            rename(`Total Confirmed Cases` = cases,
-                   Deaths = deaths)%>%
+                                         TRUE ~ as.numeric(`Cases per day`)),
+                   `Deaths per day` = deaths - lag(deaths, default = first(date)),
+                   `Deaths per day` = case_when(`Deaths per day` < 0 ~ 0,
+                                                TRUE ~ as.numeric(`Deaths per day`)))%>%
+            rename(`Total confirmed cases` = cases,
+                   `Total confirmed deaths` = deaths)%>%
             ungroup()%>%
             left_join(state_census, by = "state")%>%
             select(date, state, input$data_type_state, population)%>%
@@ -316,9 +323,12 @@ server <- function(input, output) {
             arrange(date)%>%
             mutate(`Cases per day` = cases - lag(cases, default = first(date)),
                    `Cases per day` = case_when(`Cases per day` < 0 ~ 0,
-                                         TRUE ~ as.numeric(`Cases per day`)))%>%
-            rename(`Total Confirmed Cases` = cases,
-                   Deaths = deaths)%>%
+                                         TRUE ~ as.numeric(`Cases per day`)),
+                   `Deaths per day` = deaths - lag(deaths, default = first(date)),
+                   `Deaths per day` = case_when(`Deaths per day` < 0 ~ 0,
+                                               TRUE ~ as.numeric(`Deaths per day`)))%>%
+            rename(`Total confirmed cases` = cases,
+                   `Total confirmed deaths` = deaths)%>%
             ungroup()%>%
             left_join(county_census, by = c("state", "county"))%>%
             select(date, state, county, input$data_type_state, population)%>%

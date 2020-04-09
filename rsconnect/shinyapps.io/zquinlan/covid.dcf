@@ -5,6 +5,6 @@ account: zquinlan
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2053217
-bundleId: 2971383
+bundleId: 2992150
 url: https://zquinlan.shinyapps.io/covid/
-when: 1586089184.0272
+when: 1586439230.84458
