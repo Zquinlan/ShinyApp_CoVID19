@@ -14,7 +14,7 @@ ui <- navbarPage("CoVID cases by country and state",
                      sliderInput(inputId = "previous_days_country",
                                  label = "Number of Days:",
                                  min = 1,
-                                 max = 100,
+                                 max = 200,
                                  v = 50),
                      
                      ## Input country selector
@@ -66,7 +66,7 @@ ui <- navbarPage("CoVID cases by country and state",
             sliderInput(inputId = "previous_days_state",
                         label = "Number of Days:",
                         min = 1,
-                        max = 100,
+                        max = 200,
                         v = 50),
             #State Selector
             selectInput(inputId = "state_select",
@@ -186,12 +186,12 @@ server <- function(input, output) {
             mutate(`Total confirmed cases` = as.numeric(cumsum(`Cases per day`)),
                    `Total confirmed deaths` = as.numeric(cumsum(`Deaths per day`)))%>%
             ungroup()%>%
-            select(date, country, input$data_type_country, popData2018)%>%
+            select(date, country, input$data_type_country, popData2019)%>%
             rename(plot = 3)%>%
             mutate(country = gsub("_", " ", country),
                    plot = case_when(input$pop_divider_country == "Not relativized" ~ plot,
-                                    input$pop_divider_country == "Percent of Population" ~ plot/popData2018*100,
-                                    input$pop_divider_country == "Cases per 100,000 people" ~ plot/popData2018*100000))%>%
+                                    input$pop_divider_country == "Percent of Population" ~ plot/popData2019*100,
+                                    input$pop_divider_country == "Cases per 100,000 people" ~ plot/popData2019*100000))%>%
             filter(date != "2020-12-31")
         
         
